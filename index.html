@@ -126,4 +126,578 @@
 
     <div class="card" style="margin-top:12px">
       <div class="content">
-  
+        <b style="font-size:14px">最近记录</b>
+        <div class="hint">点“历史”可以看到每次编辑的时间与改动内容。</div>
+        <div class="list" id="list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <button class="btn primary" id="btnAdd">新增</button>
+    <button class="btn" id="btnToday">今天</button>
+  </div>
+
+  <dialog id="dlgHistory">
+    <div class="content">
+      <div class="dlg-h">
+        <b>编辑历史</b>
+        <button class="btn small" id="btnCloseHistory">关闭</button>
+      </div>
+      <div class="sep"></div>
+      <pre id="historyBox"></pre>
+    </div>
+  </dialog>
+
+  <dialog id="dlgBackup">
+    <div class="content">
+      <div class="dlg-h">
+        <b>备份 / 导入</b>
+        <button class="btn small" id="btnCloseBackup">关闭</button>
+      </div>
+      <div class="sep"></div>
+      <div class="row">
+        <div class="field" style="flex:1 1 100%">
+          <label>把这里的 JSON 复制保存；或把你的 JSON 粘进来导入</label>
+          <textarea id="backupArea" placeholder="这里会显示导出的JSON…"></textarea>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="btnCopy">复制</button>
+        <button class="btn" id="btnDoImport">从文本导入</button>
+      </div>
+      <div class="hint">导入会覆盖当前数据（建议先导出备份）。</div>
+    </div>
+  </dialog>
+
+<script>
+(() => {
+  const KEY = "xq_life_v1";
+  const cats = [
+    { id:"snack", name:"零食评分" },
+    { id:"money", name:"记账" },
+    { id:"study", name:"学习打卡" },
+    { id:"todo",  name:"代办清单" },
+    { id:"life",  name:"生活记录" },
+  ];
+  const $ = sel => document.querySelector(sel);
+
+  const nowISO = () => new Date().toISOString();
+  const fmt = (iso) => {
+    try {
+      const d = new Date(iso);
+      const pad = n => String(n).padStart(2,"0");
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    } catch { return iso; }
+  };
+
+  const emptyState = () => ({
+    version: 1,
+    items: [] // {id, cat, data, createdAt, updatedAt, history:[{ts, what}]}
+  });
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if(!raw) return emptyState();
+      const obj = JSON.parse(raw);
+      if(!obj || !Array.isArray(obj.items)) return emptyState();
+      return obj;
+    }catch(e){
+      return emptyState();
+    }
+  }
+  function save(){
+    localStorage.setItem(KEY, JSON.stringify(state));
+  }
+
+  function uid(){
+    return Math.random().toString(16).slice(2) + Date.now().toString(16);
+  }
+
+  let state = load();
+  let currentCat = "snack";
+
+  // UI: Tabs
+  const tabs = $("#tabs");
+  tabs.innerHTML = cats.map(c => `<button class="tab" data-cat="${c.id}">${c.name}</button>`).join("");
+  function setTab(cat){
+    currentCat = cat;
+    [...tabs.querySelectorAll(".tab")].forEach(b => b.classList.toggle("on", b.dataset.cat===cat));
+    renderPanel();
+    renderList();
+  }
+  tabs.addEventListener("click", (e) => {
+    const b = e.target.closest(".tab");
+    if(!b) return;
+    setTab(b.dataset.cat);
+  });
+
+  // Panel forms per category
+  function renderPanel(){
+    const panel = $("#panel");
+    const cat = currentCat;
+
+    if(cat==="snack"){
+      panel.innerHTML = `
+        <div class="row">
+          <div class="field">
+            <label>零食名称</label>
+            <input id="f_name" placeholder="例如：海苔肉松小贝" />
+          </div>
+          <div class="field">
+            <label>店铺/来源</label>
+            <input id="f_shop" placeholder="例如：零食有鸣" />
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>喜爱程度（1-5⭐）</label>
+            <select id="f_star">
+              <option value="1">1⭐</option>
+              <option value="2">2⭐</option>
+              <option value="3" selected>3⭐</option>
+              <option value="4">4⭐</option>
+              <option value="5">5⭐</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>备注</label>
+            <input id="f_note" placeholder="口感/甜度/回购？" />
+          </div>
+        </div>
+        <div class="hint">新增后可以点“编辑/历史”。（每次改动都会记录时间）</div>
+      `;
+      return;
+    }
+
+    if(cat==="money"){
+      panel.innerHTML = `
+        <div class="row">
+          <div class="field">
+            <label>金额（元）</label>
+            <input id="f_amount" inputmode="decimal" placeholder="例如：18.5" />
+          </div>
+          <div class="field">
+            <label>类别</label>
+            <input id="f_type" placeholder="奶茶/猫粮/通勤/饭…" />
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>是否为必要开支</label>
+            <select id="f_need">
+              <option value="need">必要</option>
+              <option value="want" selected>想要</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>备注</label>
+            <input id="f_note" placeholder="店名/原因/优惠券" />
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    if(cat==="study"){
+      panel.innerHTML = `
+        <div class="row">
+          <div class="field">
+            <label>科目</label>
+            <input id="f_subject" placeholder="语文/数学/英语/政治/历史/地理" />
+          </div>
+          <div class="field">
+            <label>学习时长（分钟）</label>
+            <input id="f_minutes" inputmode="numeric" placeholder="例如：45" />
+          </div>
+        </div>
+        <div class="row">
+          <div class="field" style="flex:1 1 100%">
+            <label>学了什么</label>
+            <textarea id="f_content" placeholder="今天刷了哪套卷/哪几个知识点…"></textarea>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    if(cat==="todo"){
+      panel.innerHTML = `
+        <div class="row">
+          <div class="field" style="flex:1 1 100%">
+            <label>代办内容</label>
+            <input id="f_task" placeholder="例如：给梨花预约疫苗 / 打印试卷 / 背诵…" />
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>优先级</label>
+            <select id="f_pri">
+              <option value="low">低</option>
+              <option value="mid" selected>中</option>
+              <option value="high">高</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>状态</label>
+            <select id="f_done">
+              <option value="todo" selected>未完成</option>
+              <option value="done">已完成</option>
+            </select>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    // life
+    panel.innerHTML = `
+      <div class="row">
+        <div class="field">
+          <label>标题</label>
+          <input id="f_title" placeholder="例如：今天心情/发生的事" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="field" style="flex:1 1 100%">
+          <label>内容</label>
+          <textarea id="f_body" placeholder="随手记：天气/工作/朋友/灵感…"></textarea>
+        </div>
+      </div>
+    `;
+  }
+
+  // Add item
+  function addItem(){
+    const cat = currentCat;
+    const createdAt = nowISO();
+    let data = {};
+    try{
+      if(cat==="snack"){
+        data = {
+          name: ($("#f_name").value || "").trim(),
+          shop: ($("#f_shop").value || "").trim(),
+          star: Number($("#f_star").value || 3),
+          note: ($("#f_note").value || "").trim()
+        };
+        if(!data.name) return toast("先写零食名称～");
+      } else if(cat==="money"){
+        const amount = ($("#f_amount").value || "").trim();
+        data = {
+          amount: amount ? Number(amount) : 0,
+          type: ($("#f_type").value || "").trim(),
+          need: $("#f_need").value,
+          note: ($("#f_note").value || "").trim()
+        };
+        if(!data.amount) return toast("金额要填一个数字～");
+      } else if(cat==="study"){
+        data = {
+          subject: ($("#f_subject").value || "").trim(),
+          minutes: Number(($("#f_minutes").value||"").trim() || 0),
+          content: ($("#f_content").value || "").trim()
+        };
+        if(!data.subject && !data.content) return toast("至少写个科目或内容～");
+      } else if(cat==="todo"){
+        data = {
+          task: ($("#f_task").value || "").trim(),
+          pri: $("#f_pri").value,
+          done: $("#f_done").value
+        };
+        if(!data.task) return toast("先写代办内容～");
+      } else { // life
+        data = {
+          title: ($("#f_title").value || "").trim(),
+          body: ($("#f_body").value || "").trim()
+        };
+        if(!data.title && !data.body) return toast("至少写点标题或内容～");
+      }
+    } catch(e){
+      return toast("输入框读取失败，刷新试试～");
+    }
+
+    const item = {
+      id: uid(),
+      cat,
+      data,
+      createdAt,
+      updatedAt: createdAt,
+      history: [{ ts: createdAt, what: "创建" }]
+    };
+
+    state.items.unshift(item);
+    save();
+    clearInputs();
+    renderList();
+    toast("已新增 ✅");
+  }
+
+  function clearInputs(){
+    ["#f_name","#f_shop","#f_note","#f_amount","#f_type","#f_subject","#f_minutes","#f_content","#f_task","#f_title","#f_body"].forEach(s=>{
+      const el = document.querySelector(s);
+      if(el) el.value = "";
+    });
+    const star = $("#f_star"); if(star) star.value = "3";
+    const need = $("#f_need"); if(need) need.value = "want";
+    const pri = $("#f_pri"); if(pri) pri.value = "mid";
+    const done = $("#f_done"); if(done) done.value = "todo";
+  }
+
+  // Render list
+  function renderList(){
+    const list = $("#list");
+    const items = state.items.filter(x => x.cat === currentCat);
+    if(items.length===0){
+      list.innerHTML = `<div class="item"><div class="meta">这里还没有记录哦～</div><div class="hint">点底部“新增”开始。</div></div>`;
+      return;
+    }
+    list.innerHTML = items.map(renderItem).join("");
+  }
+
+  function escapeHtml(s){
+    return (s??"").toString()
+      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  }
+
+  function renderItem(it){
+    const cAt = fmt(it.createdAt);
+    const uAt = fmt(it.updatedAt);
+    let title = "", body = "", extra = "";
+
+    if(it.cat==="snack"){
+      title = `${escapeHtml(it.data.name)} <span class="stars">${"⭐".repeat(Math.max(1,Math.min(5,it.data.star||3)))}</span>`;
+      body = [it.data.shop ? `来源：${escapeHtml(it.data.shop)}` : "",
+              it.data.note ? `备注：${escapeHtml(it.data.note)}` : ""]
+              .filter(Boolean).join("<br>");
+    } else if(it.cat==="money"){
+      title = `¥${Number(it.data.amount||0).toFixed(2)} · ${escapeHtml(it.data.type||"未分类")}`;
+      extra = it.data.need==="need" ? `<span style="color:var(--good)">必要</span>` : `<span style="color:var(--muted)">想要</span>`;
+      body = it.data.note ? `备注：${escapeHtml(it.data.note)}` : "";
+    } else if(it.cat==="study"){
+      title = `${escapeHtml(it.data.subject||"学习")} · ${Number(it.data.minutes||0)} 分钟`;
+      body = escapeHtml(it.data.content||"");
+    } else if(it.cat==="todo"){
+      const done = it.data.done==="done";
+      title = `${done ? "✅" : "🕒"} ${escapeHtml(it.data.task||"")}`;
+      extra = `优先级：${escapeHtml(it.data.pri||"mid")}`;
+      body = "";
+    } else {
+      title = escapeHtml(it.data.title || "（无标题）");
+      body = escapeHtml(it.data.body || "");
+    }
+
+    return `
+      <div class="item" data-id="${it.id}">
+        <div class="meta">
+          <span>创建：${cAt}</span>
+          <span>更新：${uAt}</span>
+          ${extra ? `<span>· ${extra}</span>` : ""}
+        </div>
+        <div class="title">${title}</div>
+        ${body ? `<div class="hint">${body}</div>` : ""}
+        <div class="actions">
+          <button class="btn small" data-act="edit">编辑</button>
+          <button class="btn small" data-act="history">历史</button>
+          <button class="btn small danger" data-act="del">删除</button>
+        </div>
+      </div>
+    `;
+  }
+
+  // Edit / history / delete handlers
+  $("#list").addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-act]");
+    if(!btn) return;
+    const itemEl = e.target.closest(".item[data-id]");
+    const id = itemEl?.dataset?.id;
+    const act = btn.dataset.act;
+    if(!id) return;
+    const it = state.items.find(x=>x.id===id);
+    if(!it) return;
+
+    if(act==="history"){
+      openHistory(it);
+      return;
+    }
+    if(act==="del"){
+      if(!confirm("确定删除这条记录吗？")) return;
+      state.items = state.items.filter(x=>x.id!==id);
+      save(); renderList(); toast("已删除");
+      return;
+    }
+    if(act==="edit"){
+      quickEdit(it);
+      return;
+    }
+  });
+
+  function openHistory(it){
+    const dlg = $("#dlgHistory");
+    const box = $("#historyBox");
+    const lines = (it.history||[]).map(h => `• ${fmt(h.ts)}  ${h.what}`).join("\n");
+    box.textContent = lines || "（没有历史记录）";
+    dlg.showModal();
+  }
+
+  $("#btnCloseHistory").addEventListener("click", ()=>$("#dlgHistory").close());
+
+  function quickEdit(it){
+    // 简洁编辑：用 prompt，手机最稳（不用复杂弹窗表单）
+    const before = JSON.stringify(it.data);
+    let changedWhat = [];
+
+    if(it.cat==="snack"){
+      const name = prompt("零食名称：", it.data.name||""); if(name===null) return;
+      const shop = prompt("来源/店铺：", it.data.shop||""); if(shop===null) return;
+      const star = prompt("星级 1-5：", String(it.data.star||3)); if(star===null) return;
+      const note = prompt("备注：", it.data.note||""); if(note===null) return;
+
+      const newData = { name:name.trim(), shop:shop.trim(), star: clampStar(star), note:note.trim() };
+      it.data = newData;
+
+      changedWhat.push(diffText("名称", it.data.name, JSON.parse(before).name));
+      changedWhat.push(diffText("来源", it.data.shop, JSON.parse(before).shop));
+      changedWhat.push(diffText("星级", String(it.data.star), String(JSON.parse(before).star)));
+      changedWhat.push(diffText("备注", it.data.note, JSON.parse(before).note));
+    }
+    else if(it.cat==="money"){
+      const amount = prompt("金额：", String(it.data.amount||0)); if(amount===null) return;
+      const type = prompt("类别：", it.data.type||""); if(type===null) return;
+      const need = prompt("必要/想要（need/want）：", it.data.need||"want"); if(need===null) return;
+      const note = prompt("备注：", it.data.note||""); if(note===null) return;
+
+      const old = JSON.parse(before);
+      it.data = { amount: Number(amount)||0, type:type.trim(), need:(need==="need"?"need":"want"), note:note.trim() };
+      changedWhat.push(diffText("金额", String(it.data.amount), String(old.amount)));
+      changedWhat.push(diffText("类别", it.data.type, old.type));
+      changedWhat.push(diffText("属性", it.data.need, old.need));
+      changedWhat.push(diffText("备注", it.data.note, old.note));
+    }
+    else if(it.cat==="study"){
+      const subject = prompt("科目：", it.data.subject||""); if(subject===null) return;
+      const minutes = prompt("分钟：", String(it.data.minutes||0)); if(minutes===null) return;
+      const content = prompt("学了什么：", it.data.content||""); if(content===null) return;
+
+      const old = JSON.parse(before);
+      it.data = { subject:subject.trim(), minutes:Number(minutes)||0, content:content.trim() };
+      changedWhat.push(diffText("科目", it.data.subject, old.subject));
+      changedWhat.push(diffText("分钟", String(it.data.minutes), String(old.minutes)));
+      changedWhat.push(diffText("内容", it.data.content, old.content));
+    }
+    else if(it.cat==="todo"){
+      const task = prompt("代办内容：", it.data.task||""); if(task===null) return;
+      const pri  = prompt("优先级 low/mid/high：", it.data.pri||"mid"); if(pri===null) return;
+      const done = prompt("状态 todo/done：", it.data.done||"todo"); if(done===null) return;
+
+      const old = JSON.parse(before);
+      it.data = { task:task.trim(), pri: sanitizePri(pri), done:(done==="done"?"done":"todo") };
+      changedWhat.push(diffText("内容", it.data.task, old.task));
+      changedWhat.push(diffText("优先级", it.data.pri, old.pri));
+      changedWhat.push(diffText("状态", it.data.done, old.done));
+    }
+    else {
+      const title = prompt("标题：", it.data.title||""); if(title===null) return;
+      const body  = prompt("内容：", it.data.body||""); if(body===null) return;
+
+      const old = JSON.parse(before);
+      it.data = { title:title.trim(), body:body.trim() };
+      changedWhat.push(diffText("标题", it.data.title, old.title));
+      changedWhat.push(diffText("内容", it.data.body, old.body));
+    }
+
+    // 过滤未变化
+    changedWhat = changedWhat.filter(Boolean);
+    const ts = nowISO();
+    it.updatedAt = ts;
+    it.history = it.history || [];
+    it.history.unshift({ ts, what: changedWhat.length ? ("编辑：" + changedWhat.join("；")) : "编辑：未变化" });
+
+    save();
+    renderList();
+    toast("已更新 ✅");
+  }
+
+  function diffText(label, nowV, oldV){
+    if((nowV??"") === (oldV??"")) return "";
+    return `${label}：${oldV??""} → ${nowV??""}`.trim();
+  }
+  function clampStar(v){
+    const n = Number(v);
+    if(!n || n<1) return 1;
+    if(n>5) return 5;
+    return Math.round(n);
+  }
+  function sanitizePri(v){
+    v = (v||"").toLowerCase().trim();
+    if(v==="low"||v==="mid"||v==="high") return v;
+    return "mid";
+  }
+
+  // Tiny toast
+  let tmr = null;
+  function toast(msg){
+    clearTimeout(tmr);
+    $("#sub").textContent = msg;
+    tmr = setTimeout(()=>$("#sub").textContent="本地保存 · 带编辑历史", 1800);
+  }
+
+  // Footer buttons
+  $("#btnAdd").addEventListener("click", addItem);
+  $("#btnToday").addEventListener("click", () => {
+    toast("今天：" + fmt(nowISO()));
+  });
+
+  // Backup / import / wipe
+  const dlgB = $("#dlgBackup");
+  $("#btnExport").addEventListener("click", () => {
+    $("#backupArea").value = JSON.stringify(state, null, 2);
+    dlgB.showModal();
+  });
+  $("#btnImport").addEventListener("click", () => {
+    $("#backupArea").value = "";
+    dlgB.showModal();
+  });
+  $("#btnCloseBackup").addEventListener("click", ()=>dlgB.close());
+  $("#btnCopy").addEventListener("click", async () => {
+    try{
+      await navigator.clipboard.writeText($("#backupArea").value || "");
+      toast("已复制备份");
+    }catch{
+      toast("复制失败：长按全选复制");
+    }
+  });
+  $("#btnDoImport").addEventListener("click", () => {
+    try{
+      const txt = ($("#backupArea").value || "").trim();
+      if(!txt) return toast("先粘贴 JSON～");
+      const obj = JSON.parse(txt);
+      if(!obj || !Array.isArray(obj.items)) return toast("JSON 格式不对");
+      state = obj;
+      save();
+      renderList();
+      dlgB.close();
+      toast("导入成功 ✅");
+    }catch(e){
+      toast("导入失败：检查 JSON 是否完整");
+    }
+  });
+  $("#btnWipe").addEventListener("click", () => {
+    if(!confirm("确定清空所有数据吗？此操作不可恢复（建议先导出备份）。")) return;
+    state = emptyState();
+    save();
+    renderList();
+    toast("已清空");
+  });
+
+  // Service worker
+  if("serviceWorker" in navigator){
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  }
+
+  // Init
+  setTab("snack");
+})();
+</script>
+</body>
+</html>
