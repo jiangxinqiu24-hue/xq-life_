@@ -1,0 +1,15 @@
+{
+  "name": "心秋的小生活",
+  "short_name": "心秋生活",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f0f10",
+  "theme_color": "#111111",
+  "icons": [
+    {
+      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAArUlEQVR4nO3WsQ2AMAwF0WkQ1yQ0gRkQvQGZkQxgJHn1j3y0sQw2mCw3b6d7wQAAAAAAAAAAwJkCq7m4m7yq6cYw2w0w0m4fGg8m0j5rQx7f3QmZ8x3b4mQmYb0q0Gm9r6m8gq8c3cY0f9f2c8qj7w2k0Gm9r6m8gq8c3cY0f9f2c8qj7wAAAAAAAAAAAPwB1b8Yp8p3dJQAAAAASUVORK5CYII=",
+      "sizes": "64x64",
+      "type": "image/png"
+    }
+  ]
+}
