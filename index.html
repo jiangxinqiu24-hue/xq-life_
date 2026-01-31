@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#111111" />
+  <title>心秋的小生活</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <style>
+    :root{
+      --bg:#0f0f10; --card:#17171a; --muted:#9aa0a6; --text:#f2f2f2; --line:#2a2a2f;
+      --accent:#7c5cff; --good:#2bd576; --warn:#ffcc66; --bad:#ff6b6b;
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "PingFang SC","Microsoft YaHei", sans-serif;
+      background:linear-gradient(180deg,#0b0b0c, #121214 40%, #0f0f10); color:var(--text);
+      padding:16px 12px 90px;
+    }
+    header{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:8px 6px 14px;
+    }
+    .title{font-size:18px; font-weight:700; letter-spacing:.5px}
+    .sub{font-size:12px; color:var(--muted)}
+    .pill{
+      background:rgba(124,92,255,.15); border:1px solid rgba(124,92,255,.25);
+      color:#dcd6ff; padding:6px 10px; border-radius:999px; font-size:12px;
+      user-select:none;
+    }
+    .tabs{
+      position:sticky; top:0; z-index:20;
+      background:rgba(15,15,16,.85); backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--line);
+      margin:0 -12px 12px; padding:10px 10px 8px;
+      display:flex; gap:8px; overflow:auto;
+    }
+    .tab{
+      border:1px solid var(--line); background:rgba(23,23,26,.6);
+      color:var(--text); padding:8px 12px; border-radius:999px; font-size:13px;
+      white-space:nowrap;
+    }
+    .tab.active{border-color:rgba(124,92,255,.55); background:rgba(124,92,255,.18)}
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .card{
+      background:rgba(23,23,26,.85);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.25);
+      margin-bottom:12px;
+    }
+    .card h3{margin:0 0 10px; font-size:14px}
+    .hint{color:var(--muted); font-size:12px; line-height:1.4}
+    .btn{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      font-size:13px;
+    }
+    .btn.primary{
+      border-color:rgba(124,92,255,.55);
+      background:rgba(124,92,255,.22);
+      color:#efeaff;
+    }
+    .btn.danger{
+      border-color:rgba(255,107,107,.45);
+      background:rgba(255,107,107,.16);
+    }
+    .btn:active{transform:scale(.98)}
+    input, select, textarea{
+      width:100%;
+      background:#101013;
+      border:1px solid var(--line);
+      color:var(--text);
+      border-radius:12px;
+      padding:10px 12px;
+      outline:none;
+      font-size:14px;
+    }
+    textarea{min-height:92px; resize:vertical}
+    .grid{display:grid; gap:10px}
+    .grid.two{grid-template-columns:1fr 1fr}
+    .list{display:flex; flex-direction:column; gap:10px}
+    .item{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      border-radius:14px;
+      padding:12px;
+    }
+    .itemTop{display:flex; justify-content:space-between; gap:12px; align-items:flex-start}
+    .itemTitle{font-weight:700; font-size:14px}
+    .meta{font-size:12px; color:var(--muted); margin-top:4px}
+    .stars{letter-spacing:1px; color:#ffdf6b}
+    .tags{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
+    .tag{
+      font-size:11px; padding:4px 8px; border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03); color:var(--muted);
+    }
+    .actions{display:flex; gap:8px; margin-top:10px}
+    .sep{height:1px; background:var(--line); margin:10px 0}
+    .kbd{font-size:11px; color:var(--muted)}
+    .footbar{
+      position:fixed; left:0; right:0; bottom:0; z-index:30;
+      background:rgba(15,15,16,.9); border-top:1px solid var(--line);
+      padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+      display:flex; gap:10px; justify-content:space-between;
+    }
+    .footbar .btn{flex:1}
+    dialog{
+      border:none; border-radius:18px; padding:0;
+      width:min(560px, calc(100vw - 24px));
+      background:transparent;
+    }
+    dialog::backdrop{background:rgba(0,0,0,.55)}
+    .modal{
+      background:rgba(23,23,26,.95);
+      border:1px solid var(--line);
+      border-radius:18px;
+      overflow:hidden;
+    }
+    .modalHead{
+      display:flex; justify-content:space-between; align-items:center;
+      padding:12px 12px 10px; border-bottom:1px solid var(--line);
+    }
+    .modalHead strong{font-size:14px}
+    .modalBody{padding:12px}
+    .history{
+      max-height:220px; overflow:auto;
+      border:1px dashed rgba(154,160,166,.35);
+      border-radius:14px; padding:10px;
+      background:rgba(0,0,0,.12);
+    }
+    .histRow{font-size:12px; color:var(--muted); line-height:1.5; margin:0 0 8px}
+    .histRow b{color:var(--text); font-weight:700}
+  </style>
+</head>
+
+<body>
+  <hea
