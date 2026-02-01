@@ -1,4 +1,3 @@
-<!-- PART 1/5: HTML head -->
 <!doctype html>
 <html lang="zh-CN">
 <head>
@@ -28,7 +27,6 @@
       --fontSans: system-ui, -apple-system, "PingFang SC","Microsoft YaHei","Noto Sans CJK SC", sans-serif;
     }
 
-    /* THEMES */
     [data-theme="light"]{
       --bg:#f6f7fb;
       --panel: rgba(0,0,0,.05);
@@ -67,33 +65,24 @@
       -webkit-tap-highlight-color: transparent;
     }
     a{color:inherit}
-
     .wrap{
       max-width: 980px;
       margin: 0 auto;
       padding: 18px 14px 120px;
     }
-
     .topbar{
       display:flex; align-items:flex-start; justify-content:space-between;
       gap:12px;
       margin: 8px 2px 14px;
     }
-    .title{
-      display:flex; flex-direction:column; gap:6px;
-    }
-    .title h1{
-      margin:0;
-      font-size: 24px;
-      letter-spacing:.5px;
-    }
+    .title{display:flex; flex-direction:column; gap:6px;}
+    .title h1{margin:0;font-size:24px;letter-spacing:.5px;}
     .subtitle{
       color:var(--muted);
       font-size: 12px;
       display:flex; gap:10px; flex-wrap:wrap;
       align-items:center;
     }
-
     .pillRow{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end}
     .pill{
       background: linear-gradient(180deg, var(--panel2), var(--panel));
@@ -133,11 +122,7 @@
       display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
       border-bottom: 1px solid var(--line);
     }
-    .cardHeader h2{
-      margin:0;
-      font-size: 15px;
-      letter-spacing:.3px;
-    }
+    .cardHeader h2{margin:0;font-size:15px;letter-spacing:.3px;}
     .cardHeader .hint{color:var(--muted); font-size:12px; margin-top:6px}
     .cardBody{padding:14px}
 
@@ -180,9 +165,7 @@
       color:white;
       font-weight:600;
     }
-    .btn.ghost{
-      background: transparent;
-    }
+    .btn.ghost{background: transparent;}
     .btn.danger{
       background: linear-gradient(90deg, rgba(255,92,92,.9), rgba(255,77,141,.9));
       color:white;
@@ -225,11 +208,8 @@
     textarea{min-height: 92px; resize: vertical}
     .req::after{content:" *"; color: var(--accent2)}
     .row2{display:grid; grid-template-columns: 1fr 1fr; gap:10px}
-    .row3{display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px}
 
-    .list{
-      display:flex; flex-direction:column; gap:10px;
-    }
+    .list{display:flex; flex-direction:column; gap:10px;}
     .item{
       border:1px solid var(--line);
       border-radius: var(--radius);
@@ -360,10 +340,40 @@
     }
     [data-theme="light"] .toast{background: rgba(17,19,34,.86)}
     .toast.show{display:block}
+
     .searchRow{display:flex; gap:10px; align-items:center}
     .searchRow input{flex:1}
 
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:12px; color:var(--muted)}
+    .mono{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:12px;
+      color:var(--muted)
+    }
+
+    /* Simple confirm/prompt fallback (mobile friendly) */
+    .dlgMask{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px 12px;
+      z-index: 90;
+    }
+    .dlgMask.show{display:flex}
+    .dlg{
+      width:min(520px,100%);
+      border-radius: 22px;
+      background: linear-gradient(180deg, var(--panel2), var(--panel));
+      border:1px solid var(--line);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .dlgHead{padding:14px 14px 10px; border-bottom:1px solid var(--line)}
+    .dlgHead strong{font-size:14px}
+    .dlgBody{padding:14px}
+    .dlgFoot{padding:14px; border-top:1px solid var(--line); display:flex; gap:10px}
+    .dlgFoot .btn{flex:1}
   </style>
 </head>
 <body>
@@ -415,7 +425,7 @@
         <div class="cardHeader">
           <div>
             <h2>今日总结</h2>
-            <div class="hint">一键生成今日小结，可复制发给哥哥或存档。</div>
+            <div class="hint">一键生成今日小结，可复制。</div>
           </div>
           <div class="btnRow">
             <button class="btn" id="btnGenSummary">生成</button>
@@ -436,6 +446,7 @@
     </div>
   </div>
 
+  <!-- Main modal -->
   <div class="modalMask" id="mask">
     <div class="modal">
       <div class="modalHead">
@@ -448,8 +459,20 @@
     </div>
   </div>
 
+  <!-- Dialog modal -->
+  <div class="dlgMask" id="dlgMask">
+    <div class="dlg">
+      <div class="dlgHead"><strong id="dlgTitle">提示</strong></div>
+      <div class="dlgBody" id="dlgBody"></div>
+      <div class="dlgFoot">
+        <button class="btn" id="dlgCancel">取消</button>
+        <button class="btn primary" id="dlgOk">确定</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast">已复制</div>
-  <!-- PART 2/5: JS helpers + storage -->
+
 <script>
 (() => {
   const $ = (q, el=document) => el.querySelector(q);
@@ -463,7 +486,6 @@
   const fmtDate = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
   const fmtTime = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   const fmtDT = (d) => `${fmtDate(d)} ${fmtTime(d)}`;
-
   const uid = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
 
   const toast = (msg="已完成") => {
@@ -473,9 +495,14 @@
     setTimeout(()=>t.classList.remove("show"), 1200);
   };
 
-  const safeJsonParse = (s, fallback) => {
-    try { return JSON.parse(s); } catch { return fallback; }
-  };
+  const safeJsonParse = (s, fallback) => { try { return JSON.parse(s); } catch { return fallback; } };
+
+  function escapeHtml(s){
+    return String(s ?? "").replace(/[&<>"']/g, c => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[c]));
+  }
+  function escapeAttr(s){ return escapeHtml(s).replace(/"/g, "&quot;"); }
 
   const defaultState = () => ({
     version: 2,
@@ -485,10 +512,7 @@
       { id:"g_study", name:"学习💪" },
       { id:"g_life", name:"生活记录🌙" },
     ],
-    records: [
-      // record schema:
-      // {id,type,groupId,title,source,stars(1-5),amount,minutes,note,fav,createdAt,updatedAt,history:[{at, patch}]}
-    ]
+    records: []
   });
 
   const loadState = () => {
@@ -517,9 +541,52 @@
     $("#themeSel").addEventListener("change", e => setTheme(e.target.value));
   };
 
+  // ---- Mobile-friendly dialog (replaces prompt/confirm) ----
+  let dlgResolve = null;
+  const showDialog = ({title="提示", bodyHTML="", showCancel=true, okText="确定", cancelText="取消"}) => {
+    $("#dlgTitle").textContent = title;
+    $("#dlgBody").innerHTML = bodyHTML;
+    $("#dlgOk").textContent = okText;
+    $("#dlgCancel").textContent = cancelText;
+    $("#dlgCancel").style.display = showCancel ? "" : "none";
+    $("#dlgMask").classList.add("show");
+    return new Promise(res => { dlgResolve = res; });
+  };
+  const closeDialog = () => {
+    $("#dlgMask").classList.remove("show");
+  };
+  $("#dlgOk").addEventListener("click", () => { const r = dlgResolve; dlgResolve=null; closeDialog(); r && r({ok:true}); });
+  $("#dlgCancel").addEventListener("click", () => { const r = dlgResolve; dlgResolve=null; closeDialog(); r && r({ok:false}); });
+  $("#dlgMask").addEventListener("click", (e)=>{ if(e.target.id==="dlgMask"){ const r = dlgResolve; dlgResolve=null; closeDialog(); r && r({ok:false}); }});
+
+  const askText = async (title, placeholder, defaultValue="") => {
+    const id = "dlgInput_" + uid();
+    const ret = await showDialog({
+      title,
+      bodyHTML: `
+        <div class="mono" style="margin-bottom:10px">${escapeHtml(placeholder||"")}</div>
+        <input id="${id}" value="${escapeAttr(defaultValue)}" placeholder="${escapeAttr(placeholder||"")}" />
+      `,
+      showCancel:true,
+      okText:"保存"
+    });
+    if(!ret.ok) return null;
+    const v = ($("#"+id)?.value || "").trim();
+    return v || null;
+  };
+
+  const askConfirm = async (title, content) => {
+    const ret = await showDialog({
+      title,
+      bodyHTML:`<div style="line-height:1.5">${escapeHtml(content||"")}</div>`,
+      showCancel:true,
+      okText:"确定"
+    });
+    return !!ret.ok;
+  };
+
   // ---- App state ----
   let state = loadState();
-  let view = { mode: "home" }; // home | list | groups | add | edit | today
 
   const groupName = (gid) => (state.groups.find(g=>g.id===gid)?.name) || "未分组";
   const typeName = (t) => ({
@@ -530,13 +597,13 @@
     life:"🌙 生活记录",
   }[t] || t);
 
-  const typeHint = (t) => ({
-    snack:"记录零食、渠道、星级和备注，支持收藏⭐与分组。",
-    expense:"记录花销：金额、分类/来源、备注。",
-    study:"记录学习：科目/内容、用时、心得。",
-    todo:"写待办事项，可标记完成。",
-    life:"记录日常：标题+内容，像便签一样。",
-  }[t] || "");
+  const homeModules = [
+    { type:"snack",  title:"零食评分", icon:"🍪", desc:"记录零食、渠道、星级、备注；支持收藏⭐。"},
+    { type:"expense",title:"记账",     icon:"💰", desc:"快速记一笔钱：金额+分类/来源+备注。"},
+    { type:"study",  title:"学习打卡", icon:"📚", desc:"记录学习内容和用时，复盘更清楚。"},
+    { type:"todo",   title:"代办清单", icon:"✅", desc:"写待办、标完成，别让脑子当记事本。"},
+    { type:"life",   title:"生活记录", icon:"🌙", desc:"像便签一样写一段：今天发生了什么。"},
+  ];
 
   const newRecord = (type) => ({
     id: uid(),
@@ -613,10 +680,14 @@
     input.click();
   });
 
-  // ---- Modal ----
+  // ---- Main modal ----
   const openModal = (title, html) => {
     $("#modalTitle").textContent = title;
     $("#modalBody").innerHTML = html;
+
+    // IMPORTANT: modal content is injected now, so bind after injection
+    bindModalEvents();
+
     $("#mask").classList.add("show");
   };
   const closeModal = () => $("#mask").classList.remove("show");
@@ -635,7 +706,7 @@
     const sumMin = study.reduce((a,b)=>a+(Number(b.minutes)||0),0);
 
     const snacks = today.filter(r=>r.type==="snack");
-    const topSnack = snacks.sort((a,b)=>(b.stars||0)-(a.stars||0))[0];
+    const topSnack = [...snacks].sort((a,b)=>(b.stars||0)-(a.stars||0))[0];
 
     const todos = today.filter(r=>r.type==="todo");
     const done = todos.filter(t=>t.done).length;
@@ -652,7 +723,6 @@
     lines.push(`🌙 生活记录：${life.length} 条`);
     lines.push(``);
     if (today.length === 0) lines.push(`今天还没记录呢～写一句也算开始。`);
-
     return lines.join("\n");
   };
 
@@ -667,7 +737,6 @@
       await navigator.clipboard.writeText(text);
       toast("已复制");
     }catch{
-      // fallback
       const ta = document.createElement("textarea");
       ta.value = text;
       document.body.appendChild(ta);
@@ -684,15 +753,8 @@
     $("#subTime").textContent = `现在：${fmtDT(d)}`;
   };
   setInterval(tick, 1000 * 15); tick();
-  <!-- PART 3/5: render home + add form -->
-  const homeModules = [
-    { type:"snack",  title:"零食评分", icon:"🍪", desc:"记录零食、渠道、星级、备注；支持收藏⭐。"},
-    { type:"expense",title:"记账",     icon:"💰", desc:"快速记一笔钱：金额+分类/来源+备注。"},
-    { type:"study",  title:"学习打卡", icon:"📚", desc:"记录学习内容和用时，日后复盘超爽。"},
-    { type:"todo",   title:"代办清单", icon:"✅", desc:"写待办、标完成，别让脑子当记事本。"},
-    { type:"life",   title:"生活记录", icon:"🌙", desc:"像便签一样写一段：今天发生了什么。"},
-  ];
 
+  // ---- Render home ----
   const renderHome = () => {
     const el = $("#homeCards");
     const counts = Object.fromEntries(homeModules.map(m => [m.type, state.records.filter(r=>r.type===m.type).length]));
@@ -702,7 +764,7 @@
           <b>${m.icon} ${m.title}</b>
           <span>${counts[m.type] || 0}</span>
         </div>
-        <div class="d">${m.desc}</div>
+        <div class="d">${escapeHtml(m.desc)}</div>
         <div class="tag">点我新增 / 查看</div>
       </div>
     `).join("");
@@ -716,6 +778,30 @@
     const rec = newRecord(type);
     openEditModal(rec, true);
   };
+
+  const renderHistory = (rec) => {
+    const rows = (rec.history || []).map(h=>{
+      const when = fmtDT(new Date(h.at));
+      const keys = Object.keys(h.patch || {});
+      const body = keys.map(k => `• ${k}: ${String(h.patch[k]).slice(0,120)}`).join("\n");
+      return `<div class="item">
+        <div class="meta">${escapeHtml(when)}</div>
+        <pre class="mono" style="white-space:pre-wrap;margin:0">${escapeHtml(body || "（无变更详情）")}</pre>
+      </div>`;
+    }).join("");
+    return `<div class="list">${rows || `<div class="mono">暂无历史</div>`}</div>`;
+  };
+
+  function diffPatch(before, after){
+    const keys = ["type","groupId","title","source","stars","amount","minutes","note","done","fav"];
+    const patch = {};
+    keys.forEach(k=>{
+      const a = before?.[k];
+      const b = after?.[k];
+      if (JSON.stringify(a) !== JSON.stringify(b)) patch[k] = b;
+    });
+    return patch;
+  }
 
   const openEditModal = (rec, isNew=false) => {
     const groupOptions = state.groups.map(g => `<option value="${g.id}" ${g.id===rec.groupId?"selected":""}>${escapeHtml(g.name)}</option>`).join("");
@@ -822,175 +908,59 @@
       `;
     })();
 
-    const historyBtn = rec.history?.length ? `<button class="btn" id="btnHist">编辑历史</button>` : "";
-    const dangerBtn = isNew ? "" : `<button class="btn danger" id="btnDel">删除</button>`;
+    const historyBtn = rec.history?.length ? `<button class="btn" data-act="history" data-id="${rec.id}">编辑历史</button>` : "";
+    const dangerBtn = isNew ? "" : `<button class="btn danger" data-act="delete" data-id="${rec.id}">删除</button>`;
 
-    openModal(`${isNew?"✏️ 新增":"✏️ 编辑"} · ${typeName(rec.type)}`,
-      `${baseTop}
-      ${fields}
-      <div style="height:10px"></div>
-      <div class="btnRow">
-        <button class="btn primary" id="btnSave">保存</button>
-        ${historyBtn}
-        ${dangerBtn}
+    openModal(`${isNew?"✏️ 新增":"✏️ 编辑"} · ${typeName(rec.type)}`, `
+      <div data-scope="editor" data-id="${rec.id}">
+        ${baseTop}
+        ${fields}
+        <div style="height:10px"></div>
+        <div class="btnRow">
+          <button class="btn primary" data-act="save" data-id="${rec.id}">保存</button>
+          ${historyBtn}
+          ${dangerBtn}
+        </div>
+        <div class="mono" style="margin-top:10px">新增后可在“全部记录/分组”中查看与编辑（每次修改会记录时间）</div>
       </div>
-      <div class="mono" style="margin-top:10px">新增后可在“全部记录/分组”中查看与编辑（每次修改会记录时间）</div>
-      `
-    );
+    `);
 
-    // type tabs
-    $$(".tab[data-type]").forEach(b=>{
-      b.addEventListener("click", ()=>{
-        rec.type = b.getAttribute("data-type");
-        openEditModal(rec, isNew);
-      });
-    });
-
-    // toggle fav
-    $("#f_fav").addEventListener("click", ()=>{
-      rec.fav = !rec.fav;
-      openEditModal(rec, isNew);
-    });
-
-    // todo done
-    const doneBtn = $("#f_done");
-    if (doneBtn) doneBtn.addEventListener("click", ()=>{
-      rec.done = !rec.done;
-      openEditModal(rec, isNew);
-    });
-
-    // save
-    $("#btnSave").addEventListener("click", ()=>{
-      const before = JSON.parse(JSON.stringify(rec));
-
-      rec.groupId = $("#f_group")?.value || rec.groupId;
-      rec.title = ($("#f_title")?.value || "").trim();
-      rec.source = ($("#f_source")?.value || "").trim();
-      rec.note = ($("#f_note")?.value || "").trim();
-
-      if (rec.type === "snack") rec.stars = Number($("#f_stars")?.value || 3);
-      if (rec.type === "expense") rec.amount = Number($("#f_amount")?.value || 0);
-      if (rec.type === "study") rec.minutes = Number($("#f_minutes")?.value || 0);
-
-      // required validation
-      const requiredOk = rec.title.length > 0 && (
-        rec.type === "expense" ? true : true
-      );
-      if (!requiredOk) { toast("有必填项没写"); return; }
-
-      // history
-      const patch = diffPatch(before, rec);
-      if (Object.keys(patch).length) pushHistory(rec, patch);
-
-      upsertRecord(rec);
-      renderHome();
-      toast("已保存");
-      closeModal();
-    });
-
-    // history modal
-    const btnHist = $("#btnHist");
-    if (btnHist) btnHist.addEventListener("click", ()=>{
-      openModal("🕒 编辑历史", renderHistory(rec));
-    });
-
-    // delete
-    const btnDel = $("#btnDel");
-    if (btnDel) btnDel.addEventListener("click", ()=>{
-      if (!confirm("确定删除？（删除后不可恢复，除非你之前导出备份）")) return;
-      deleteRecord(rec.id);
-      renderHome();
-      toast("已删除");
-      closeModal();
-    });
+    // Attach current working record to window map
+    working.set(rec.id, rec);
   };
 
-  const renderHistory = (rec) => {
-    const rows = (rec.history || []).map(h=>{
-      const when = fmtDT(new Date(h.at));
-      const keys = Object.keys(h.patch || {});
-      const body = keys.map(k => `• ${k}: ${String(h.patch[k]).slice(0,120)}`).join("\n");
-      return `<div class="item">
-        <div class="meta">${when}</div>
-        <pre class="mono" style="white-space:pre-wrap;margin:0">${escapeHtml(body || "（无变更详情）")}</pre>
-      </div>`;
-    }).join("");
-    return `<div class="list">${rows || `<div class="mono">暂无历史</div>`}</div>`;
-  };
-  <!-- PART 4/5: list view + groups view + today -->
-  const openAllRecords = () => {
-    const html = `
-      <div class="tabs">
-        <button class="tab active" data-filter="all">全部</button>
-        <button class="tab" data-filter="fav">⭐ 收藏</button>
-        ${homeModules.map(m => `<button class="tab" data-filter="${m.type}">${m.icon} ${m.title}</button>`).join("")}
-      </div>
+  // ---- Working records map (fix: ensure edits refer to right record) ----
+  const working = new Map(); // id -> record object (editable)
 
-      <div class="searchRow">
-        <input id="q" placeholder="搜索：标题/备注/来源/分组…" />
-        <button class="btn" id="btnStats">统计</button>
-      </div>
+  // ---- List rendering ----
+  const renderItem = (r) => {
+    const when = fmtDT(new Date(r.createdAt));
+    const g = groupName(r.groupId);
+    const tag = typeName(r.type);
 
-      <div style="height:10px"></div>
-      <div class="list" id="listBox"></div>
+    let extra = "";
+    if (r.type === "snack") extra = `${r.stars||0}⭐ · ${(r.source||"")}`;
+    if (r.type === "expense") extra = `${Number(r.amount||0).toFixed(2)} 元 · ${(r.source||"")}`;
+    if (r.type === "study") extra = `${r.minutes||0} 分 · ${(r.source||"")}`;
+    if (r.type === "todo") extra = `${r.done?"✅ 已完成":"⬜ 未完成"} · ${(r.source||"")}`;
+    if (r.type === "life") extra = `${(r.source||"")}`;
+
+    return `
+      <div class="item">
+        <div class="itemTop">
+          <div>
+            <div class="meta">${escapeHtml(tag)} · ${escapeHtml(g)} · ${escapeHtml(when)}</div>
+            <p class="itemTitle">${escapeHtml(r.title || "(无标题)")}</p>
+          </div>
+          <div class="actions">
+            <button class="iconBtn star ${r.fav?"on":""}" data-act="star" data-id="${r.id}">${r.fav?"⭐":"☆"}</button>
+            <button class="iconBtn" data-act="edit" data-id="${r.id}">编辑</button>
+          </div>
+        </div>
+        ${extra ? `<div class="meta">${escapeHtml(extra)}</div>` : ""}
+        ${r.note ? `<p class="itemNote">${escapeHtml(r.note)}</p>` : ""}
+      </div>
     `;
-    openModal("📚 全部记录", html);
-
-    let filter = "all";
-    let keyword = "";
-
-    const render = () => {
-      const listEl = $("#listBox");
-      let arr = [...state.records];
-
-      if (filter === "fav") arr = arr.filter(r=>r.fav);
-      else if (filter !== "all") arr = arr.filter(r=>r.type === filter);
-
-      if (keyword.trim()){
-        const k = keyword.trim().toLowerCase();
-        arr = arr.filter(r => (
-          (r.title||"").toLowerCase().includes(k) ||
-          (r.note||"").toLowerCase().includes(k) ||
-          (r.source||"").toLowerCase().includes(k) ||
-          groupName(r.groupId).toLowerCase().includes(k)
-        ));
-      }
-
-      listEl.innerHTML = arr.length ? arr.map(r => renderItem(r)).join("") : `<div class="mono">这里还没有记录～点“新增”写一条吧。</div>`;
-
-      // bind item actions
-      $$(".iconBtn[data-act]", listEl).forEach(btn=>{
-        btn.addEventListener("click", ()=>{
-          const id = btn.getAttribute("data-id");
-          const act = btn.getAttribute("data-act");
-          const rec = findRecord(id);
-          if (!rec) return;
-          if (act === "edit") openEditModal(rec, false);
-          if (act === "star"){
-            rec.fav = !rec.fav;
-            upsertRecord(rec);
-            render();
-          }
-        });
-      });
-    };
-
-    $$(".tab[data-filter]").forEach(t=>{
-      t.addEventListener("click", ()=>{
-        $$(".tab[data-filter]").forEach(x=>x.classList.remove("active"));
-        t.classList.add("active");
-        filter = t.getAttribute("data-filter");
-        render();
-      });
-    });
-
-    $("#q").addEventListener("input", (e)=>{ keyword = e.target.value; render(); });
-
-    $("#btnStats").addEventListener("click", ()=>{
-      openModal("📊 统计面板", renderStats());
-    });
-
-    render();
   };
 
   const renderStats = () => {
@@ -998,15 +968,12 @@
     const byType = Object.fromEntries(homeModules.map(m => [m.type, state.records.filter(r=>r.type===m.type).length]));
     const fav = state.records.filter(r=>r.fav).length;
 
-    // snack stats
     const snacks = state.records.filter(r=>r.type==="snack");
     const avgStar = snacks.length ? (snacks.reduce((a,b)=>a+(b.stars||0),0)/snacks.length).toFixed(2) : "—";
 
-    // expense stats
     const exps = state.records.filter(r=>r.type==="expense");
     const sumExp = exps.reduce((a,b)=>a+(Number(b.amount)||0),0);
 
-    // study stats
     const study = state.records.filter(r=>r.type==="study");
     const sumMin = study.reduce((a,b)=>a+(Number(b.minutes)||0),0);
 
@@ -1035,122 +1002,120 @@
     `;
   };
 
-  const openGroups = () => {
+  const openAllRecords = () => {
     const html = `
-      <div class="btnRow">
-        <button class="btn primary" id="btnNewGroup">新建分组</button>
+      <div class="tabs">
+        <button class="tab active" data-filter="all">全部</button>
+        <button class="tab" data-filter="fav">⭐ 收藏</button>
+        ${homeModules.map(m => `<button class="tab" data-filter="${m.type}">${m.icon} ${m.title}</button>`).join("")}
       </div>
+
+      <div class="searchRow">
+        <input id="q" placeholder="搜索：标题/备注/来源/分组…" />
+        <button class="btn" data-act="stats">统计</button>
+      </div>
+
       <div style="height:10px"></div>
-      <div class="folderGrid" id="gGrid"></div>
-      <div style="height:12px"></div>
-      <div class="mono">点分组=查看；长按/编辑可改名（手机上就用“编辑”按钮）。</div>
+      <div class="list" id="listBox"></div>
     `;
-    openModal("🗂️ 分组（文件夹）", html);
+    openModal("📚 全部记录", html);
+
+    let filter = "all";
+    let keyword = "";
 
     const render = () => {
-      const gGrid = $("#gGrid");
-      gGrid.innerHTML = state.groups.map(g => {
-        const count = state.records.filter(r=>r.groupId===g.id).length;
-        return `
-          <div class="folder" data-gid="${g.id}">
-            <b>${escapeHtml(g.name)}</b>
-            <div class="small">点击查看</div>
-            <div class="count">${count} 条</div>
-            <div class="btnRow" style="margin-top:8px">
-              <button class="btn" data-act="rename" data-gid="${g.id}">编辑</button>
-            </div>
-          </div>
-        `;
-      }).join("");
+      const listEl = $("#listBox");
+      let arr = [...state.records];
 
-      $$(".folder[data-gid]").forEach(f=>{
-        f.addEventListener("click", (e)=>{
-          // ignore clicks on inner buttons
-          if ((e.target?.getAttribute?.("data-act")) === "rename") return;
-          const gid = f.getAttribute("data-gid");
-          openModal(`📁 ${groupName(gid)}`, renderGroupRecords(gid));
-          bindGroupRecordActions(gid);
-        });
-      });
+      if (filter === "fav") arr = arr.filter(r=>r.fav);
+      else if (filter !== "all") arr = arr.filter(r=>r.type === filter);
 
-      $$('button[data-act="rename"]').forEach(b=>{
-        b.addEventListener("click", ()=>{
-          const gid = b.getAttribute("data-gid");
-          const g = state.groups.find(x=>x.id===gid);
-          if (!g) return;
-          const name = prompt("分组改名：", g.name);
-          if (!name) return;
-          g.name = name.trim();
-          saveState(state);
-          renderHome();
-          render();
-          toast("已保存");
-        });
-      });
+      if (keyword.trim()){
+        const k = keyword.trim().toLowerCase();
+        arr = arr.filter(r => (
+          (r.title||"").toLowerCase().includes(k) ||
+          (r.note||"").toLowerCase().includes(k) ||
+          (r.source||"").toLowerCase().includes(k) ||
+          groupName(r.groupId).toLowerCase().includes(k)
+        ));
+      }
+
+      listEl.innerHTML = arr.length ? arr.map(r => renderItem(r)).join("") : `<div class="mono">这里还没有记录～点“新增”写一条吧。</div>`;
     };
 
-    $("#btnNewGroup").addEventListener("click", ()=>{
-      const name = prompt("新分组名称：", "新分组✨");
-      if (!name) return;
-      state.groups.unshift({ id: uid(), name: name.trim() });
-      saveState(state);
-      renderHome();
-      render();
-      toast("已新建");
-    });
+    // store render function for modal scope
+    modalScope.renderAll = render;
+    modalScope.getAllState = () => ({filter, keyword});
+    modalScope.setAllFilter = (v) => { filter = v; render(); };
+    modalScope.setAllKeyword = (v) => { keyword = v; render(); };
 
     render();
   };
 
-  const renderGroupRecords = (gid) => {
+  const openGroups = () => {
+    const html = `
+      <div class="btnRow">
+        <button class="btn primary" data-act="newGroup">新建分组</button>
+      </div>
+      <div style="height:10px"></div>
+      <div class="folderGrid" id="gGrid"></div>
+      <div style="height:12px"></div>
+      <div class="mono">点分组=查看；点“编辑”可改名。</div>
+    `;
+    openModal("🗂️ 分组（文件夹）", html);
+    renderGroupsGrid();
+  };
+
+  const renderGroupsGrid = () => {
+    const gGrid = $("#gGrid");
+    if (!gGrid) return;
+    gGrid.innerHTML = state.groups.map(g => {
+      const count = state.records.filter(r=>r.groupId===g.id).length;
+      return `
+        <div class="folder" data-act="openGroup" data-gid="${g.id}">
+          <b>${escapeHtml(g.name)}</b>
+          <div class="small">点击查看</div>
+          <div class="count">${count} 条</div>
+          <div class="btnRow" style="margin-top:8px">
+            <button class="btn" data-act="renameGroup" data-gid="${g.id}">编辑</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  };
+
+  const openGroupRecords = (gid) => {
+    const gname = groupName(gid);
     const arr = state.records.filter(r=>r.groupId===gid);
-    return `
+    openModal(`📁 ${escapeHtml(gname)}`, `
       <div class="searchRow">
         <input id="gq" placeholder="在此分组内搜索…" />
-        <button class="btn" id="gFav">⭐ 只看收藏</button>
+        <button class="btn" data-act="toggleFavOnly" data-gid="${gid}">⭐ 只看收藏</button>
       </div>
       <div style="height:10px"></div>
       <div class="list" id="gList">
         ${arr.length ? arr.map(r=>renderItem(r)).join("") : `<div class="mono">这个分组还空着～</div>`}
       </div>
-    `;
-  };
+    `);
 
-  const bindGroupRecordActions = (gid) => {
-    let onlyFav = false;
-    let keyword = "";
-    const render = () => {
-      let arr = state.records.filter(r=>r.groupId===gid);
-      if (onlyFav) arr = arr.filter(r=>r.fav);
-      if (keyword.trim()){
-        const k = keyword.trim().toLowerCase();
-        arr = arr.filter(r =>
+    modalScope.gid = gid;
+    modalScope.onlyFav = false;
+    modalScope.keyword = "";
+    modalScope.renderGroup = () => {
+      let arr2 = state.records.filter(r=>r.groupId===gid);
+      if (modalScope.onlyFav) arr2 = arr2.filter(r=>r.fav);
+      if (modalScope.keyword.trim()){
+        const k = modalScope.keyword.trim().toLowerCase();
+        arr2 = arr2.filter(r =>
           (r.title||"").toLowerCase().includes(k) ||
           (r.note||"").toLowerCase().includes(k) ||
           (r.source||"").toLowerCase().includes(k)
         );
       }
       const box = $("#gList");
-      box.innerHTML = arr.length ? arr.map(r=>renderItem(r)).join("") : `<div class="mono">没有匹配的记录～</div>`;
-      $$(".iconBtn[data-act]", box).forEach(btn=>{
-        btn.addEventListener("click", ()=>{
-          const id = btn.getAttribute("data-id");
-          const act = btn.getAttribute("data-act");
-          const rec = findRecord(id);
-          if (!rec) return;
-          if (act === "edit") openEditModal(rec, false);
-          if (act === "star"){
-            rec.fav = !rec.fav;
-            upsertRecord(rec);
-            render();
-          }
-        });
-      });
+      if (!box) return;
+      box.innerHTML = arr2.length ? arr2.map(r=>renderItem(r)).join("") : `<div class="mono">没有匹配的记录～</div>`;
     };
-
-    $("#gq")?.addEventListener("input", e => { keyword = e.target.value; render(); });
-    $("#gFav")?.addEventListener("click", ()=>{ onlyFav = !onlyFav; toast(onlyFav?"只看收藏":"显示全部"); render(); });
-    render();
   };
 
   const openToday = () => {
@@ -1158,91 +1123,263 @@
     const arr = state.records.filter(r => fmtDate(new Date(r.createdAt)) === d);
     openModal(`🗓️ 今天（${d}）`, `
       <div class="btnRow">
-        <button class="btn" id="tSummary">生成今日小结</button>
+        <button class="btn" data-act="genSummaryFromToday">生成今日小结</button>
       </div>
       <div style="height:10px"></div>
       <div class="list" id="tList">${arr.length ? arr.map(r=>renderItem(r)).join("") : `<div class="mono">今天还没记录～</div>`}</div>
     `);
+  };
 
-    $("#tSummary").addEventListener("click", ()=>{
-      $("#summaryBox").textContent = buildTodaySummary();
-      toast("已生成");
-      closeModal();
-    });
+  // ---- Modal event delegation (key fix) ----
+  const modalScope = {}; // store per-modal render functions/state
+  const bindModalEvents = () => {
+    const body = $("#modalBody");
+    if (!body) return;
 
-    const box = $("#tList");
-    $$(".iconBtn[data-act]", box).forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const id = btn.getAttribute("data-id");
-        const act = btn.getAttribute("data-act");
+    // Tabs, buttons, items: use event delegation
+    body.onclick = async (e) => {
+      const el = e.target.closest("[data-act],[data-type],.tab");
+      if (!el) return;
+
+      // Type tabs in editor
+      if (el.matches("[data-type]")) {
+        const type = el.getAttribute("data-type");
+        const scope = el.closest('[data-scope="editor"]');
+        const id = scope?.getAttribute("data-id");
+        const rec = id ? working.get(id) : null;
+        if (!rec) return;
+        rec.type = type;
+        openEditModal(rec, scope?.getAttribute("data-new")==="1");
+        return;
+      }
+
+      const act = el.getAttribute("data-act");
+      const id = el.getAttribute("data-id");
+
+      if (act === "edit") {
+        const rec = findRecord(id);
+        if (rec) openEditModal(JSON.parse(JSON.stringify(rec)), false);
+        return;
+      }
+
+      if (act === "star") {
         const rec = findRecord(id);
         if (!rec) return;
-        if (act === "edit") openEditModal(rec, false);
-        if (act === "star"){
-          rec.fav = !rec.fav;
-          upsertRecord(rec);
-          openToday();
-        }
-      });
+        rec.fav = !rec.fav;
+        upsertRecord(rec);
+        // refresh current modal if it has a render
+        if (modalScope.renderAll) modalScope.renderAll();
+        if (modalScope.renderGroup) modalScope.renderGroup();
+        // today list doesn't need extra, simplest re-open
+        return;
+      }
+
+      if (act === "stats") {
+        openModal("📊 统计面板", renderStats());
+        return;
+      }
+
+      if (act === "newGroup") {
+        const name = await askText("新建分组", "分组名称", "新分组✨");
+        if (!name) return;
+        state.groups.unshift({ id: uid(), name });
+        saveState(state);
+        renderHome();
+        renderGroupsGrid();
+        toast("已新建");
+        return;
+      }
+
+      if (act === "renameGroup") {
+        const gid = el.getAttribute("data-gid");
+        const g = state.groups.find(x=>x.id===gid);
+        if (!g) return;
+        const name = await askText("分组改名", "输入新的分组名称", g.name);
+        if (!name) return;
+        g.name = name;
+        saveState(state);
+        renderHome();
+        renderGroupsGrid();
+        toast("已保存");
+        return;
+      }
+
+      if (act === "openGroup") {
+        const gid = el.getAttribute("data-gid");
+        openGroupRecords(gid);
+        return;
+      }
+
+      if (act === "toggleFavOnly") {
+        modalScope.onlyFav = !modalScope.onlyFav;
+        toast(modalScope.onlyFav ? "只看收藏" : "显示全部");
+        modalScope.renderGroup && modalScope.renderGroup();
+        return;
+      }
+
+      if (act === "genSummaryFromToday") {
+        $("#summaryBox").textContent = buildTodaySummary();
+        toast("已生成");
+        closeModal();
+        return;
+      }
+
+      // Editor actions
+      if (act === "save") {
+        const scope = el.closest('[data-scope="editor"]');
+        const rid = scope?.getAttribute("data-id");
+        const rec = rid ? working.get(rid) : null;
+        if (!rec) { toast("保存失败"); return; }
+
+        const before = JSON.parse(JSON.stringify(rec));
+
+        const getVal = (sel) => (scope.querySelector(sel)?.value ?? "");
+        const getNum = (sel) => Number(scope.querySelector(sel)?.value ?? 0);
+
+        rec.groupId = getVal("#f_group") || rec.groupId;
+        rec.title = String(getVal("#f_title")).trim();
+        rec.source = String(getVal("#f_source")).trim();
+        rec.note = String(getVal("#f_note")).trim();
+
+        if (rec.type === "snack") rec.stars = Number(getVal("#f_stars") || 3);
+        if (rec.type === "expense") rec.amount = getNum("#f_amount");
+        if (rec.type === "study") rec.minutes = getNum("#f_minutes");
+
+        // required
+        if (!rec.title) { toast("有必填项没写"); return; }
+
+        const patch = diffPatch(before, rec);
+        if (Object.keys(patch).length) pushHistory(rec, patch);
+
+        upsertRecord(rec);
+        working.delete(rec.id);
+        renderHome();
+        toast("已保存");
+        closeModal();
+        return;
+      }
+
+      if (act === "history") {
+        const rec = findRecord(id) || working.get(id);
+        if (!rec) return;
+        openModal("🕒 编辑历史", renderHistory(rec));
+        return;
+      }
+
+      if (act === "delete") {
+        const ok = await askConfirm("确认删除", "确定删除？（删除后不可恢复，除非你之前导出备份）");
+        if (!ok) return;
+        deleteRecord(id);
+        renderHome();
+        toast("已删除");
+        closeModal();
+        return;
+      }
+    };
+
+    // Inputs for list/group search (keyup)
+    const q = $("#q");
+    if (q) {
+      q.oninput = (e) => {
+        modalScope.setAllKeyword && modalScope.setAllKeyword(e.target.value || "");
+      };
+    }
+    const gq = $("#gq");
+    if (gq) {
+      gq.oninput = (e) => {
+        modalScope.keyword = e.target.value || "";
+        modalScope.renderGroup && modalScope.renderGroup();
+      };
+    }
+
+    // Tabs for list filter
+    $$(".tab[data-filter]", body).forEach(t => {
+      t.onclick = () => {
+        $$(".tab[data-filter]", body).forEach(x=>x.classList.remove("active"));
+        t.classList.add("active");
+        modalScope.setAllFilter && modalScope.setAllFilter(t.getAttribute("data-filter"));
+      };
+    });
+
+    // Editor toggles
+    const favBtn = $("#f_fav");
+    if (favBtn) {
+      favBtn.onclick = () => {
+        const scope = favBtn.closest('[data-scope="editor"]');
+        const rid = scope?.getAttribute("data-id");
+        const rec = rid ? working.get(rid) : null;
+        if (!rec) return;
+        rec.fav = !rec.fav;
+        openEditModal(rec, !findRecord(rec.id));
+      };
+    }
+    const doneBtn = $("#f_done");
+    if (doneBtn) {
+      doneBtn.onclick = () => {
+        const scope = doneBtn.closest('[data-scope="editor"]');
+        const rid = scope?.getAttribute("data-id");
+        const rec = rid ? working.get(rid) : null;
+        if (!rec) return;
+        rec.done = !rec.done;
+        openEditModal(rec, !findRecord(rec.id));
+      };
+    }
+
+    // Editor type tabs bind (class based)
+    $$(".tab[data-type]", body).forEach(b => {
+      b.onclick = () => {
+        const type = b.getAttribute("data-type");
+        const scope = b.closest('[data-scope="editor"]');
+        const rid = scope?.getAttribute("data-id");
+        const rec = rid ? working.get(rid) : null;
+        if (!rec) return;
+        rec.type = type;
+        openEditModal(rec, !findRecord(rec.id));
+      };
     });
   };
 
-  const renderItem = (r) => {
-    const when = fmtDT(new Date(r.createdAt));
-    const g = groupName(r.groupId);
-    const tag = typeName(r.type);
-
-    let extra = "";
-    if (r.type === "snack") extra = `${r.stars||0}⭐ · ${escapeHtml(r.source||"")}`;
-    if (r.type === "expense") extra = `${Number(r.amount||0).toFixed(2)} 元 · ${escapeHtml(r.source||"")}`;
-    if (r.type === "study") extra = `${r.minutes||0} 分 · ${escapeHtml(r.source||"")}`;
-    if (r.type === "todo") extra = `${r.done?"✅ 已完成":"⬜ 未完成"} · ${escapeHtml(r.source||"")}`;
-    if (r.type === "life") extra = `${escapeHtml(r.source||"")}`;
-
-    return `
-      <div class="item">
-        <div class="itemTop">
-          <div>
-            <div class="meta">${escapeHtml(tag)} · ${escapeHtml(g)} · ${escapeHtml(when)}</div>
-            <p class="itemTitle">${escapeHtml(r.title || "(无标题)")}</p>
-          </div>
-          <div class="actions">
-            <button class="iconBtn star ${r.fav?"on":""}" data-act="star" data-id="${r.id}">${r.fav?"⭐":"☆"}</button>
-            <button class="iconBtn" data-act="edit" data-id="${r.id}">编辑</button>
-          </div>
-        </div>
-        ${extra ? `<div class="meta">${escapeHtml(extra)}</div>` : ""}
-        ${r.note ? `<p class="itemNote">${escapeHtml(r.note)}</p>` : ""}
-      </div>
-    `;
-  };
-
-  // events
+  // ---- Home navigation buttons ----
   $("#btnAll").addEventListener("click", openAllRecords);
   $("#btnGroups").addEventListener("click", openGroups);
   $("#btnAdd").addEventListener("click", () => openAdd("snack"));
   $("#btnToday").addEventListener("click", openToday);
 
-  // ---- utils ----
-  function escapeHtml(s){
-    return String(s ?? "").replace(/[&<>"']/g, c => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-    }[c]));
-  }
-  function escapeAttr(s){ return escapeHtml(s).replace(/"/g, "&quot;"); }
+  // ---- Fix: list view render must be set after modal inject ----
+  const openAllRecordsFixed = () => {
+    openAllRecords();
+    const render = () => {
+      const listEl = $("#listBox");
+      if (!listEl) return;
 
-  function diffPatch(before, after){
-    const keys = ["type","groupId","title","source","stars","amount","minutes","note","done","fav"];
-    const patch = {};
-    keys.forEach(k=>{
-      const a = before?.[k];
-      const b = after?.[k];
-      if (JSON.stringify(a) !== JSON.stringify(b)) patch[k] = b;
-    });
-    return patch;
-  }
-  <!-- PART 5/5: init + close -->
-  // init
+      const st = modalScope.getAllState ? modalScope.getAllState() : {filter:"all", keyword:""};
+      let {filter, keyword} = st;
+
+      let arr = [...state.records];
+      if (filter === "fav") arr = arr.filter(r=>r.fav);
+      else if (filter !== "all") arr = arr.filter(r=>r.type === filter);
+
+      if (keyword.trim()){
+        const k = keyword.trim().toLowerCase();
+        arr = arr.filter(r => (
+          (r.title||"").toLowerCase().includes(k) ||
+          (r.note||"").toLowerCase().includes(k) ||
+          (r.source||"").toLowerCase().includes(k) ||
+          groupName(r.groupId).toLowerCase().includes(k)
+        ));
+      }
+
+      listEl.innerHTML = arr.length ? arr.map(r => renderItem(r)).join("") : `<div class="mono">这里还没有记录～点“新增”写一条吧。</div>`;
+    };
+    modalScope.renderAll = render;
+    render();
+  };
+
+  // Override the button to use fixed render
+  $("#btnAll").removeEventListener("click", openAllRecords);
+  $("#btnAll").addEventListener("click", openAllRecordsFixed);
+
+  // ---- Init ----
   initTheme();
   renderHome();
 
