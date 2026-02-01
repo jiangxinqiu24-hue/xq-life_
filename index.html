@@ -8,54 +8,74 @@
 
   <style>
     :root{
+      /* base */
       --bg0:#07080d;
       --bg1:#0b0c12;
+
       --card:#0f111a;
       --card2:#141625;
+
       --line:rgba(255,255,255,.10);
+
       --text:#f2f3ff;
       --muted:rgba(242,243,255,.72);
       --muted2:rgba(242,243,255,.55);
+
       --shadow: 0 18px 50px rgba(0,0,0,.55);
 
       --accent1:#8b5cff;
       --accent2:#ff4db8;
+
       --ok:#7cffc9;
       --warn:#ffcd6b;
       --danger:#ff5a6a;
 
       --radius:22px;
-      --radius2:16px;
-      --radius3:14px;
 
       --tap: 52px;
       --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC", Arial;
     }
 
+    /* LIGHT THEME: 用你提的“浅紫渐变 + 黑字” */
     [data-theme="light"]{
-      --bg0:#f6f7fb;
+      --bg0:#f5f0ff;
       --bg1:#ffffff;
+
       --card:#ffffff;
-      --card2:#f1f3ff;
-      --line:rgba(20,25,38,.10);
+      --card2:#f5f0ff;
+
+      --line:rgba(20,25,38,.12);
+
       --text:#141926;
-      --muted:rgba(20,25,38,.72);
+      --muted:rgba(20,25,38,.70);
       --muted2:rgba(20,25,38,.55);
+
       --shadow: 0 18px 60px rgba(24,28,45,.16);
     }
 
     *{box-sizing:border-box}
     html,body{height:100%}
+
     body{
       margin:0;
       font-family:var(--font);
       color:var(--text);
-      background:
-        radial-gradient(1200px 900px at 20% 10%, rgba(139,92,255,.22), transparent 55%),
-        radial-gradient(1200px 900px at 85% 30%, rgba(255,77,184,.14), transparent 55%),
-        linear-gradient(180deg, var(--bg0), var(--bg1));
       -webkit-font-smoothing:antialiased;
       padding: 18px 14px calc(26px + env(safe-area-inset-bottom));
+    }
+
+    /* 背景：深色深紫渐变 / 浅色浅紫渐变（并降低光晕强度避免色带） */
+    body{
+      background:
+        radial-gradient(1100px 800px at 18% 12%, rgba(139,92,255,.18), transparent 58%),
+        radial-gradient(1100px 800px at 88% 26%, rgba(255,77,184,.12), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+    }
+    [data-theme="light"] body{
+      background:
+        radial-gradient(1100px 800px at 18% 12%, rgba(139,92,255,.16), transparent 60%),
+        radial-gradient(1100px 800px at 88% 26%, rgba(255,77,184,.10), transparent 62%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
     }
 
     .wrap{max-width: 980px; margin:0 auto;}
@@ -74,14 +94,16 @@
       font-size:13px; color:var(--muted);
       display:flex; gap:10px; flex-wrap:wrap; align-items:center;
     }
+
     .pill{
       display:inline-flex; align-items:center; gap:8px;
       padding:8px 12px; border:1px solid var(--line);
-      border-radius:999px; background:rgba(255,255,255,.04);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      border-radius:999px;
+      background: rgba(255,255,255,.05);
     }
-    [data-theme="light"] .pill{ background: rgba(20,25,38,.03); }
+    [data-theme="light"] .pill{
+      background: rgba(255,255,255,.85);
+    }
 
     .actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-end}
     .btn{
@@ -89,18 +111,19 @@
       padding: 0 14px;
       border-radius: 16px;
       border:1px solid var(--line);
-      background: rgba(255,255,255,.05);
+      background: rgba(255,255,255,.06);
       color: var(--text);
       cursor:pointer;
       display:inline-flex; align-items:center; justify-content:center;
       gap:10px;
       font-weight:650;
       letter-spacing:.2px;
-      box-shadow: none;
       transition: transform .08s ease, background .2s ease, border-color .2s ease;
       user-select:none;
     }
-    [data-theme="light"] .btn{ background: rgba(20,25,38,.03); }
+    [data-theme="light"] .btn{
+      background: rgba(255,255,255,.92);
+    }
     .btn:active{ transform: scale(.98); }
     .btn.primary{
       border:none;
@@ -109,15 +132,20 @@
       color:white;
     }
     .btn.ghost{ background: transparent; }
+    [data-theme="light"] .btn.ghost{ background: rgba(255,255,255,.70); }
     .btn.danger{
       border:1px solid rgba(255,90,106,.35);
       background: rgba(255,90,106,.10);
       color: var(--text);
     }
+    [data-theme="light"] .btn.danger{
+      background: rgba(255,90,106,.12);
+    }
     .btn.ok{
       border:1px solid rgba(124,255,201,.35);
       background: rgba(124,255,201,.10);
     }
+    [data-theme="light"] .btn.ok{ background: rgba(124,255,201,.14); }
 
     .grid{
       display:grid;
@@ -129,15 +157,18 @@
       .grid{ grid-template-columns: 1fr; }
     }
 
+    /* 卡片：浅色更“实”，深色保留一点氛围 */
     .card{
-      background: rgba(255,255,255,.04);
+      background: rgba(255,255,255,.045);
       border:1px solid var(--line);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       overflow:hidden;
       position:relative;
     }
-    [data-theme="light"] .card{ background: rgba(20,25,38,.03); }
+    [data-theme="light"] .card{
+      background: rgba(255,255,255,.92);
+    }
 
     .cardHeader{
       padding:16px 16px 10px;
@@ -151,7 +182,6 @@
     }
     .cardHeader .h b{ font-size:15px; letter-spacing:.2px; }
     .cardHeader .h span{ font-size:12px; color:var(--muted); }
-
     .cardBody{ padding: 12px 16px 16px; }
 
     .modules{
@@ -162,14 +192,16 @@
     .module{
       border-radius: 18px;
       border:1px solid var(--line);
-      background: rgba(255,255,255,.03);
+      background: rgba(255,255,255,.035);
       padding: 14px 14px;
       display:flex; align-items:flex-start; justify-content:space-between;
       gap:12px;
       cursor:pointer;
       transition: transform .08s ease, background .2s ease;
     }
-    [data-theme="light"] .module{ background: rgba(20,25,38,.02); }
+    [data-theme="light"] .module{
+      background: rgba(245,240,255,.85);
+    }
     .module:active{ transform: scale(.99); }
     .module .left{display:flex; gap:10px; align-items:flex-start}
     .icon{
@@ -179,6 +211,9 @@
       border:1px solid rgba(139,92,255,.22);
       font-size:18px;
       flex:none;
+    }
+    [data-theme="light"] .icon{
+      background: rgba(139,92,255,.16);
     }
     .module .meta{display:flex; flex-direction:column; gap:6px}
     .module .meta b{ font-size:15px; }
@@ -201,13 +236,13 @@
       background: rgba(255,255,255,.03);
       padding: 12px 12px;
     }
-    [data-theme="light"] .kpi{ background: rgba(20,25,38,.02); }
+    [data-theme="light"] .kpi{
+      background: rgba(245,240,255,.85);
+    }
     .kpi b{ display:block; font-size:12px; color:var(--muted); margin-bottom:8px; }
     .kpi span{ font-size:18px; font-weight:800; }
 
-    .list{
-      display:flex; flex-direction:column; gap:10px;
-    }
+    .list{display:flex; flex-direction:column; gap:10px;}
     .item{
       border-radius: 18px;
       border:1px solid var(--line);
@@ -216,7 +251,9 @@
       display:flex; justify-content:space-between; gap:10px;
       align-items:flex-start;
     }
-    [data-theme="light"] .item{ background: rgba(20,25,38,.02); }
+    [data-theme="light"] .item{
+      background: rgba(245,240,255,.85);
+    }
     .item .a{display:flex; flex-direction:column; gap:6px}
     .item .a b{font-size:14px}
     .item .a small{font-size:12px; color:var(--muted); line-height:1.35}
@@ -228,6 +265,9 @@
       padding: 6px 10px;
       background: rgba(255,255,255,.03);
       white-space:nowrap;
+    }
+    [data-theme="light"] .tag{
+      background: rgba(255,255,255,.92);
     }
 
     /* ---- Inputs ---- */
@@ -247,7 +287,8 @@
     [data-theme="light"] input,
     [data-theme="light"] select,
     [data-theme="light"] textarea{
-      background: rgba(20,25,38,.03);
+      background: rgba(255,255,255,.92);
+      color: var(--text);
     }
     textarea{ min-height: 86px; resize: vertical; }
     input:focus, select:focus, textarea:focus{
@@ -258,7 +299,7 @@
     [data-theme="light"] input:focus,
     [data-theme="light"] select:focus,
     [data-theme="light"] textarea:focus{
-      background: rgba(255,255,255,.85);
+      background: #fff;
     }
     .req{ color: var(--warn); font-weight:800; margin-left:4px; }
 
@@ -272,18 +313,18 @@
     .footerBar .btn{ flex:1; height: 56px; border-radius: 18px; }
     .footerBar .btn.primary{ flex: 1.2; }
 
-    /* ---- Modal (fix your problem) ---- */
+    /* ---- Modal (关键修复：可滚动 + 手机顺滑) ---- */
     .overlay{
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,.55);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
       display:none;
       z-index: 9999;
       padding: 18px 14px calc(18px + env(safe-area-inset-bottom));
     }
-    [data-theme="light"] .overlay{ background: rgba(16,18,30,.35); }
+    [data-theme="light"] .overlay{
+      background: rgba(20,25,38,.30);
+    }
     .overlay.show{ display:block; }
 
     .modal{
@@ -291,12 +332,19 @@
       margin: 0 auto;
       border-radius: 26px;
       border:1px solid var(--line);
-      box-shadow: 0 30px 90px rgba(0,0,0,.60);
       overflow:hidden;
-      background: linear-gradient(180deg, rgba(20,22,35,.86), rgba(12,13,20,.86));
+
+      /* 修复：整体高度限制 */
+      max-height: 92vh;
+      display:flex;
+      flex-direction:column;
+
+      /* 让层次更干净，减少色带 */
+      background: linear-gradient(180deg, rgba(20,22,35,.92), rgba(12,13,20,.92));
+      box-shadow: 0 30px 90px rgba(0,0,0,.60);
     }
     [data-theme="light"] .modal{
-      background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(245,247,255,.92));
+      background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(245,240,255,.96));
       box-shadow: 0 30px 90px rgba(24,28,45,.26);
     }
 
@@ -307,10 +355,21 @@
       justify-content:space-between;
       gap:10px;
       border-bottom: 1px solid var(--line);
+      flex: none;
     }
     .modalHead b{ font-size:15px; }
     .modalHead .right{ display:flex; gap:10px; align-items:center; }
-    .modalBody{ padding: 14px 16px 16px; display:flex; flex-direction:column; gap:12px; }
+
+    /* 修复：modalBody 可滚动 */
+    .modalBody{
+      padding: 14px 16px 16px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
     .hint{
       font-size:12px; color:var(--muted2); line-height:1.4;
       border-left: 3px solid rgba(139,92,255,.55);
@@ -318,14 +377,16 @@
       background: rgba(139,92,255,.08);
       border-radius: 12px;
     }
+    [data-theme="light"] .hint{
+      background: rgba(139,92,255,.10);
+    }
 
     .miniRow{ display:flex; gap:10px; flex-wrap:wrap; }
     .miniRow .btn{ height: 44px; padding: 0 12px; border-radius: 14px; font-weight:700; }
+
     .divider{ height:1px; background: var(--line); margin: 6px 0; }
 
-    .search{
-      display:flex; gap:10px; align-items:center;
-    }
+    .search{ display:flex; gap:10px; align-items:center; }
     .search input{ flex:1; }
 
     .empty{
@@ -336,6 +397,7 @@
       border-radius: 18px;
       background: rgba(255,255,255,.02);
     }
+    [data-theme="light"] .empty{ background: rgba(255,255,255,.9); }
 
     .toast{
       position: fixed;
@@ -350,8 +412,6 @@
       display:none;
       z-index: 10000;
       font-size: 13px;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
     }
     [data-theme="light"] .toast{ background: rgba(20,25,38,.78); }
     .toast.show{ display:block; }
@@ -380,7 +440,6 @@
     </div>
 
     <div class="grid">
-      <!-- left -->
       <div class="card">
         <div class="cardHeader">
           <div class="h">
@@ -395,7 +454,6 @@
 
         <div class="cardBody">
           <div class="modules" id="modules"></div>
-
           <div class="footerBar">
             <button class="btn primary" id="addBtn">新增</button>
             <button class="btn" id="todayBtn">今天</button>
@@ -403,7 +461,6 @@
         </div>
       </div>
 
-      <!-- right -->
       <div class="card rightCard">
         <div class="cardHeader">
           <div class="h">
@@ -435,7 +492,6 @@
     </div>
   </div>
 
-  <!-- Modal -->
   <div class="overlay" id="overlay" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true">
       <div class="modalHead">
@@ -449,11 +505,9 @@
   </div>
 
   <div class="toast" id="toast"></div>
-
   <input id="filePicker" type="file" accept="application/json" style="display:none" />
 
   <script>
-    // ---------- helpers ----------
     const $ = (s, el=document)=> el.querySelector(s);
     const $$ = (s, el=document)=> Array.from(el.querySelectorAll(s));
     const uid = ()=> Math.random().toString(16).slice(2)+Date.now().toString(16);
@@ -470,15 +524,12 @@
       toast._tm = setTimeout(()=> t.classList.remove("show"), 1700);
     };
 
-    // ---------- storage ----------
     const STORAGE_KEY = "xq_life_data_v2";
     const defaultData = {
       version: 2,
       theme: "dark",
       groups: ["默认📌","吃吃吃😋","学习📚","生活🌙","代办✅"],
-      records: [
-        // {id,type,group,title,source,rating,amount,notes,fav,createdAt,updatedAt,history:[]}
-      ]
+      records: []
     };
 
     function loadData(){
@@ -490,14 +541,12 @@
         if(!data.groups) data.groups = structuredClone(defaultData.groups);
         if(!Array.isArray(data.records)) data.records = [];
         if(!data.theme) data.theme = "dark";
-        // normalize
         data.records.forEach(r=>{
           r.history = Array.isArray(r.history) ? r.history : [];
           r.fav = !!r.fav;
         });
         return data;
       }catch(e){
-        console.warn(e);
         return structuredClone(defaultData);
       }
     }
@@ -508,22 +557,23 @@
 
     let state = loadData();
 
-    // ---------- modules ----------
     const MODULES = [
       { type:"snack", name:"零食评分", icon:"🍪", desc:"记录零食、渠道、星级、备注；支持收藏⭐。"},
-      { type:"money", name:"记账", icon:"💰", desc:"快速记一笔钱：金额+分类+来源+备注。"},
+      { type:"money", name:"记账", icon:"💰", desc:"快速记一笔钱：金额+分类/来源+备注。"},
       { type:"study", name:"学习打卡", icon:"📚", desc:"记录学习内容和用时，复盘更清楚。"},
       { type:"todo",  name:"代办清单", icon:"✅", desc:"简单代办：可完成、可归档。"},
       { type:"life",  name:"生活记录", icon:"🌙", desc:"一句话随手记：心情/灵感/日常。"}
     ];
 
-    // ---------- UI state ----------
     let currentType = "snack";
 
     function setTheme(theme){
       state.theme = theme;
       $("#app").setAttribute("data-theme", theme);
       $("#themeBtn").textContent = `主题：${theme==="dark" ? "深色" : "浅色"}`;
+      // 让浏览器地址栏配色跟着变（可选但看着舒服）
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if(meta) meta.setAttribute("content", theme==="dark" ? "#0b0b12" : "#f5f0ff");
       saveData();
     }
 
@@ -531,7 +581,6 @@
       $("#nowText").textContent = fmtTime(Date.now());
     }
 
-    // ---------- render ----------
     function countByType(type){ return state.records.filter(r=> r.type===type).length; }
     function favCount(){ return state.records.filter(r=> r.fav).length; }
 
@@ -629,7 +678,6 @@
       })[m]);
     }
 
-    // ---------- modal ----------
     function openModal(title, bodyHtml){
       $("#modalTitle").textContent = title;
       $("#modalBody").innerHTML = bodyHtml;
@@ -648,7 +696,6 @@
       if(e.target.id==="overlay") closeModal();
     });
 
-    // ---------- forms ----------
     function groupOptions(selected){
       return state.groups.map(g=> `<option ${g===selected?"selected":""} value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join("");
     }
@@ -817,12 +864,9 @@
         favBtn.onclick = ()=>{
           fav = !fav;
           favBtn.textContent = fav ? "★ 已收藏" : "☆ 点我收藏";
-          favBtn.style.borderColor = fav ? "rgba(255,205,107,.45)" : "";
-          favBtn.style.background = fav ? "rgba(255,205,107,.10)" : "";
         };
       }
 
-      // template buttons
       $$(".miniRow .btn", $("#modalBody")).forEach(b=>{
         const tpl = b.getAttribute("data-tpl");
         if(!tpl) return;
@@ -831,12 +875,6 @@
           if(source){
             source.value = tpl;
             toast("已填入：" + tpl);
-          }else{
-            const title = $("#f_title");
-            if(title){
-              title.value = tpl + "：";
-              title.focus();
-            }
           }
         };
       });
@@ -951,7 +989,6 @@
         </div>
       `);
 
-      // templates
       $$(".miniRow .btn", $("#modalBody")).forEach(b=>{
         const tpl = b.getAttribute("data-tpl");
         if(!tpl) return;
@@ -960,12 +997,6 @@
           if(source){
             source.value = tpl;
             toast("已填入：" + tpl);
-          }else{
-            const title = $("#e_title");
-            if(title){
-              title.value = tpl + "：";
-              title.focus();
-            }
           }
         };
       });
@@ -974,8 +1005,6 @@
       $("#e_favBtn").onclick = ()=>{
         fav = !fav;
         $("#e_favBtn").textContent = fav ? "★ 已收藏" : "☆ 点我收藏";
-        $("#e_favBtn").style.borderColor = fav ? "rgba(255,205,107,.45)" : "";
-        $("#e_favBtn").style.background = fav ? "rgba(255,205,107,.10)" : "";
       };
 
       $("#e_closeBtn").onclick = closeModal;
@@ -1035,23 +1064,17 @@
       };
     }
 
-    // ---------- list / groups / summary ----------
     function openAllRecords(){
       openModal("全部记录", `
         <div class="search">
           <input id="q" placeholder="搜索：标题 / 来源 / 备注 / 分组" />
           <button class="btn" id="qFav">只看收藏⭐</button>
         </div>
-        <div class="miniRow">
-          ${MODULES.map(m=>`<button class="btn" data-filter="${m.type}">${m.icon} ${m.name}</button>`).join("")}
-          <button class="btn" data-filter="all">🧾 全部</button>
-        </div>
         <div class="divider"></div>
         <div id="allList" class="list"></div>
       `);
 
       let onlyFav = false;
-      let filterType = "all";
 
       $("#qFav").onclick = ()=>{
         onlyFav = !onlyFav;
@@ -1059,28 +1082,12 @@
         draw();
       };
 
-      $$(".miniRow .btn", $("#modalBody")).forEach(b=>{
-        const f = b.getAttribute("data-filter");
-        if(!f) return;
-        b.onclick = ()=>{
-          filterType = f;
-          toast("筛选：" + (f==="all" ? "全部" : (MODULES.find(m=>m.type===f)?.name||f)));
-          draw();
-        };
-      });
-
       $("#q").addEventListener("input", draw);
 
       function draw(){
         const kw = ($("#q").value||"").trim().toLowerCase();
         let arr = [...state.records].sort((a,b)=> (b.updatedAt||b.createdAt)-(a.updatedAt||a.createdAt));
-
-        if(filterType!=="all"){
-          arr = arr.filter(r=> r.type===filterType);
-        }
-        if(onlyFav){
-          arr = arr.filter(r=> r.fav);
-        }
+        if(onlyFav) arr = arr.filter(r=> r.fav);
         if(kw){
           arr = arr.filter(r=>{
             const blob = `${r.title||""} ${r.source||""} ${r.notes||""} ${r.group||""}`.toLowerCase();
@@ -1090,34 +1097,23 @@
 
         const box = $("#allList");
         box.innerHTML = "";
-
         if(!arr.length){
           box.innerHTML = `<div class="empty">没有匹配的记录。</div>`;
           return;
         }
-
         arr.forEach(r=>{
           const icon = MODULES.find(m=>m.type===r.type)?.icon || "📝";
-          const line = r.type==="snack"
-            ? `${r.rating ? r.rating+"⭐" : ""} ${r.source? "· "+r.source : ""}`
-            : r.type==="money"
-              ? `${typeof r.amount==="number" ? "¥"+r.amount : ""} ${r.source? "· "+r.source : ""}`
-              : r.type==="study"
-                ? `${typeof r.amount==="number" ? r.amount+"分钟" : ""}`
-                : (r.source? r.source:"");
           const time = fmtTime(r.updatedAt||r.createdAt);
-
           box.insertAdjacentHTML("beforeend", `
             <div class="item">
               <div class="a">
                 <b>${icon} ${escapeHtml(r.title)} ${r.fav?"⭐":""}</b>
-                <small>${escapeHtml(r.group||"默认📌")} · ${escapeHtml(line)} · ${time}</small>
+                <small>${escapeHtml(r.group||"默认📌")} · ${time}</small>
               </div>
               <span class="tag" role="button" data-id="${r.id}">编辑</span>
             </div>
           `);
         });
-
         $$(".tag", box).forEach(t=>{
           t.onclick = ()=>{
             const id = t.getAttribute("data-id");
@@ -1126,7 +1122,6 @@
           };
         });
       }
-
       draw();
     }
 
@@ -1171,7 +1166,6 @@
               return;
             }
             if(!confirm(`删除分组「${g}」？（记录不会删除，但会归回“默认📌”）`)) return;
-            // move records back
             state.records.forEach(r=>{
               if((r.group||"默认📌")===g) r.group = "默认📌";
             });
@@ -1206,18 +1200,10 @@
 
     function openSummary(){
       const total = state.records.length;
-      const fav = favCount();
+      const fav = state.records.filter(r=>r.fav).length;
       const snackN = state.records.filter(r=> r.type==="snack").length;
       const moneyN = state.records.filter(r=> r.type==="money").length;
-      const studyMin = state.records
-        .filter(r=> r.type==="study" && typeof r.amount==="number")
-        .reduce((s,r)=> s+r.amount, 0);
-
-      // Top snacks (fav & high rating)
-      const topSnacks = [...state.records]
-        .filter(r=> r.type==="snack")
-        .sort((a,b)=> (Number(b.rating||0) + (b.fav?1:0)) - (Number(a.rating||0) + (a.fav?1:0)))
-        .slice(0,5);
+      const studyMin = state.records.filter(r=> r.type==="study" && typeof r.amount==="number").reduce((s,r)=> s+r.amount, 0);
 
       openModal("✨ 小总结", `
         <div class="hint">这是“今天的你”——记录越多，复盘越爽。</div>
@@ -1233,43 +1219,9 @@
           <div class="kpi"><b>学习总分钟</b><span>${studyMin || 0}</span></div>
           <div class="kpi"><b>零食平均星级</b><span>${snackAvg()}</span></div>
         </div>
-
-        <div class="divider"></div>
-
-        <b style="font-size:14px;">🍪 你的“高分零食候选”</b>
-        <div class="list" style="margin-top:10px;">
-          ${
-            topSnacks.length ? topSnacks.map(r=>`
-              <div class="item">
-                <div class="a">
-                  <b>${escapeHtml(r.title)} ${r.fav?"⭐":""}</b>
-                  <small>${(r.rating||"-")}⭐ · ${escapeHtml(r.source||"")} · ${escapeHtml(r.group||"默认📌")}</small>
-                </div>
-                <span class="tag" role="button" data-id="${r.id}">编辑</span>
-              </div>
-            `).join("") : `<div class="empty">你还没有零食记录～去记一条吧！</div>`
-          }
-        </div>
-
-        <div class="footerBar">
-          <button class="btn primary" id="sumAllBtn">去全部记录</button>
-          <button class="btn" id="sumCloseBtn">关闭</button>
-        </div>
       `);
-
-      $$(".tag", $("#modalBody")).forEach(t=>{
-        t.onclick = ()=>{
-          const id = t.getAttribute("data-id");
-          const rec = state.records.find(x=>x.id===id);
-          if(rec) openEditModal(rec);
-        };
-      });
-
-      $("#sumAllBtn").onclick = openAllRecords;
-      $("#sumCloseBtn").onclick = closeModal;
     }
 
-    // ---------- export/import/wipe ----------
     $("#exportBtn").onclick = ()=>{
       const blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
       const a = document.createElement("a");
@@ -1280,7 +1232,7 @@
       a.download = name;
       a.click();
       setTimeout(()=> URL.revokeObjectURL(a.href), 1500);
-      toast("备份已导出✅（去下载里找）");
+      toast("备份已导出✅");
     };
 
     $("#importBtn").onclick = ()=> $("#filePicker").click();
@@ -1295,7 +1247,6 @@
           toast("备份格式不对🥺");
           return;
         }
-        // merge safely
         state = {
           version: 2,
           theme: data.theme || state.theme || "dark",
@@ -1306,7 +1257,6 @@
         setTheme(state.theme);
         toast("导入成功✅");
       }catch(err){
-        console.warn(err);
         toast("导入失败🥺");
       }finally{
         $("#filePicker").value = "";
@@ -1321,7 +1271,6 @@
       toast("已清空");
     };
 
-    // ---------- header buttons ----------
     $("#themeBtn").onclick = ()=>{
       setTheme(state.theme==="dark" ? "light" : "dark");
     };
@@ -1332,7 +1281,6 @@
     $("#groupsBtn").onclick = openGroups;
     $("#summaryBtn").onclick = openSummary;
 
-    // init
     function init(){
       setTheme(state.theme || "dark");
       tickNow();
